@@ -1,0 +1,52 @@
+{
+    "variables": {
+      "client_id": "{{env `ARM_CLIENT_ID`}}",
+      "client_secret": "{{env `ARM_CLIENT_SECRET`}}",
+      "subscription_id": "{{env `ARM_SUBSCRIPTION_ID`}}",
+      "resource_group_name": "{{env `RESOURCE_GROUP_NAME`}}",
+      "image_publisher": "Canonical",
+      "image_offer": "UbuntuServer",
+      "image_sku": "16.04-LTS",
+      "vsts_build_id": "{{env `VSTS_BUILD_ID`}}",
+      "vsts_build_number": "{{env `VSTS_BUILD_NUMBER`}}",
+      "image_build_timestamp": "{{env `VSTS_BUILD_TIMESTAMP`}}"
+    },
+    "builders": [{
+      "type": "azure-arm",
+  
+      "client_id": "{{user `client_id`}}",
+      "client_secret": "{{user `client_secret`}}",
+      "subscription_id": "{{user `subscription_id`}}",
+  
+      "os_type": "Linux",
+      "image_publisher": "{{user `image_publisher`}}",
+      "image_offer": "{{user `image_offer`}}",
+      "image_sku": "{{user `image_sku`}}",
+  
+      "managed_image_resource_group_name": "{{user `resource_group_name`}}",
+      "managed_image_name": "{{user `image_publisher`}}-{{user `image_offer`}}-{{user `image_sku`}}-{{user `vsts_build_id`}}-{{user `image_build_timestamp`}}",
+  
+      "azure_tags": {
+          "image-publisher": "{{user `image_publisher`}}",
+          "image-offer": "{{user `image_offer`}}",
+          "image-sku": "{{user `image_sku`}}",
+          "image-vsts-build": "{{user `vsts_build_id`}}",
+          "image-build-timestamp": "{{user `image_build_timestamp`}}",
+          "image-build-number": "{{user `vsts_build_number`}}"
+      },
+  
+      "location": "West US 2",
+      "vm_size": "Standard_DS1_v2"
+    }],
+    "provisioners": [{
+      "execute_command": "chmod +x {{ .Path }}; {{ .Vars }} sudo -E sh '{{ .Path }}'",
+      "inline": [
+        "apt-get update",
+        "apt-get upgrade -y",
+  
+        "/usr/sbin/waagent -force -deprovision+user && export HISTSIZE=0 && sync"
+      ],
+      "inline_shebang": "/bin/sh -x",
+      "type": "shell"
+    }]
+  }
