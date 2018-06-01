@@ -1,0 +1,55 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "adminPublicKey": {
+            "reference": {
+                "keyVault": {
+                    "id": "/subscriptions/8c15b385-5593-495b-bfe6-b1d62f0eb0e4/resourceGroups/steam-keyvault/providers/Microsoft.KeyVault/vaults/steam-vault"
+                    },
+                "secretName": "vstslinux-public-key"
+            }
+        },
+        "vmProperties": {
+            "value": [
+                {
+                    "vmName": "itdev2017",
+                    "vmSize": "Standard_DS2_v2_Promo",
+                    "adminUsername": "vmadmin"
+                }
+            ]
+        },
+        "managedDiskId": {
+            "value": ""
+        },
+        "diagnosticsStorageProperties": {
+            "value": [
+                {
+                    "diagnosticsStorageAccountName": "itdevconnvmdiag",
+                    "diagnosticsStorageAccountType": "Standard_LRS"
+                }
+            ]
+        },
+        "vNetProperties": {
+            "value": [
+                {
+                    "virtualNetworkName": "demo-vnet",
+                    "addressPrefix": "10.20.0.0/16"
+                },
+                {
+                    "subnet1Name": "subnet-1",
+                    "subnet1Prefix": "10.20.0.0/24"
+                }
+            ]
+        },
+        "availabilitySetProperties": {
+            "value": [
+                {
+                    "availabilitySetName": "as-demo",
+                    "availabilitySetPlatformFaultDomainCount": "2",
+                    "availabilitySetPlatformUpdateDomainCount": "2"
+                }
+            ]
+        }
+    }
+}

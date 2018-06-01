@@ -1,0 +1,200 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmProperties": {
+            "type": "array"
+        },
+        "managedDiskId": {
+            "type": "string"
+        },
+        "diagnosticsStorageProperties": {
+            "type": "array"
+        },
+        "vNetProperties": {
+            "type": "array"
+        },
+        "availabilitySetProperties": {
+            "type": "array"
+        },
+        "adminPublicKey": {
+            "type": "securestring"
+        }
+    },
+    "variables": {
+        "vnetId": "[resourceId(resourceGroup().name,'Microsoft.Network/virtualNetworks', parameters('vNetProperties')[0].virtualNetworkName)]",
+        "subnetRef": "[concat(variables('vnetId'), '/subnets/', parameters('vNetProperties')[1].subnet1Name)]",
+        "networkInterfaceName": "[concat(parameters('vmProperties')[0].vmName,'-','nic','-','0')]",
+        "networkSecurityGroupName": "[concat(parameters('vmProperties')[0].vmName,'-','nsg')]",
+        "publicIpAddressName": "[concat(parameters('vmProperties')[0].vmName,'-','ip')]",
+        "publicIpAddressType": "Dynamic",
+        "sshKeyPath": "[concat('/home/',parameters('vmProperties')[0].adminUserName,'/.ssh/authorized_keys')]"
+    },
+    "resources": [
+        {
+            "name": "[parameters('vmProperties')[0].vmName]",
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2017-03-30",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]",
+                "[concat('Microsoft.Compute/availabilitySets/', parameters('availabilitySetProperties')[0].availabilitySetName)]",
+                "[concat('Microsoft.Storage/storageAccounts/', parameters('diagnosticsStorageProperties')[0].diagnosticsStorageAccountName)]"
+            ],
+            "properties": {
+                "osProfile": {
+                    "computerName": "[parameters('vmProperties')[0].vmName]",
+                    "adminUsername": "[parameters('vmProperties')[0].adminUsername]",
+                    "linuxConfiguration": {
+                        "disablePasswordAuthentication": true,
+                        "ssh": {
+                            "publicKeys": [
+                                {
+                                    "path": "[variables('sshKeyPath')]",
+                                    "keyData": "[parameters('adminPublicKey')]"
+                                }
+                            ]
+                        }
+                    }
+                },
+                "hardwareProfile": {
+                    "vmSize": "[parameters('vmProperties')[0].vmSize]"
+                },
+                "storageProfile": {
+                    "imageReference": {
+                        "id": "[parameters('managedDiskId')]"
+                    },
+                    "osDisk": {
+                        "createOption": "FromImage",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS"
+                        }
+                    },
+                    "dataDisks": []
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('networkInterfaceName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true,
+                        "storageUri": "[reference(resourceId(resourceGroup().name, 'Microsoft.Storage/storageAccounts', parameters('diagnosticsStorageProperties')[0].diagnosticsStorageAccountName), '2015-06-15').primaryEndpoints['blob']]"
+                    }
+                },
+                "availabilitySet": {
+                    "id": "[resourceId('Microsoft.Compute/availabilitySets', parameters('availabilitySetProperties')[0].availabilitySetName)]"
+                }
+            }  
+        },
+        {
+            "name": "[parameters('availabilitySetProperties')[0].availabilitySetName]",
+            "type": "Microsoft.Compute/availabilitySets",
+            "apiVersion": "2016-04-30-preview",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "platformFaultDomainCount": "[parameters('availabilitySetProperties')[0].availabilitySetPlatformFaultDomainCount]",
+                "platformUpdateDomainCount": "[parameters('availabilitySetProperties')[0].availabilitySetPlatformUpdateDomainCount]",
+                "managed": true
+            }
+        },
+        {
+            "name": "[parameters('diagnosticsStorageProperties')[0].diagnosticsStorageAccountName]",
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2015-06-15",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "accountType": "[parameters('diagnosticsStorageProperties')[0].diagnosticsStorageAccountType]"
+            }
+        },
+        {
+            "name": "[parameters('vNetProperties')[0].virtualNetworkName]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2016-12-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vNetProperties')[0].addressPrefix]"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[parameters('vNetProperties')[1].subnet1Name]",
+                        "properties": {
+                            "addressPrefix": "[parameters('vNetProperties')[1].subnet1Prefix]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "name": "[variables('networkInterfaceName')]",
+            "type": "Microsoft.Network/networkInterfaces",
+            "apiVersion": "2016-09-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Network/virtualNetworks/', parameters('vNetProperties')[0].virtualNetworkName)]",
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('publicIpAddressName'))]",
+                "[concat('Microsoft.Network/networkSecurityGroups/', variables('networkSecurityGroupName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "ipconfig1",
+                        "properties": {
+                            "subnet": {
+                                "id": "[variables('subnetRef')]"
+                            },
+                            "privateIPAllocationMethod": "Dynamic",
+                            "publicIpAddress": {
+                                "id": "[resourceId(resourceGroup().name,'Microsoft.Network/publicIpAddresses', variables('publicIpAddressName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
+                }
+            }
+        },
+        {
+            "name": "[variables('publicIpAddressName')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2016-09-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "publicIpAllocationMethod": "[variables('publicIpAddressType')]",
+                "dnsSettings": {
+                    "domainNameLabel": "[parameters('vmProperties')[0].vmName]"
+                }
+            }
+        },
+        {
+            "name": "[variables('networkSecurityGroupName')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2016-09-01",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "default-allow-ssh",
+                        "properties": {
+                            "priority": 1000,
+                            "sourceAddressPrefix": "*",
+                            "protocol": "Tcp",
+                            "destinationPortRange": "22",
+                            "access": "Allow",
+                            "direction": "Inbound",
+                            "sourcePortRange": "*",
+                            "destinationAddressPrefix": "*"
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+}
