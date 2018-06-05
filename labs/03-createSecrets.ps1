@@ -23,9 +23,3 @@ $secretName = 'packer-client-secret'
 $secretValue = $sp.password
 $secretDescription = 'Service Principal password for the Packer Builder'
 az keyvault secret set --vault-name $vault.name --name $secretName --value $secretValue --description $secretDescription
-
-### Create Packer SSH secret
-$secretName = 'packer-client-secret'
-$secretValue = (1..$(Get-Random -Minimum 12 -Maximum 16) | ForEach-Object {([char[]]([char]33..[char]95) + ([char[]]([char]97..[char]126))) | Get-Random}) -join “”
-$secretDescription = 'SSH password for the Packer Builder'
-az keyvault secret set --vault-name $vault.name --name $secretName --value $secretValue --description $secretDescription
