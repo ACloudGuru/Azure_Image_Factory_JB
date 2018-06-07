@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "versionProperties": {
+      "value": {
+        "version": "1.0.0",
+        "publishingProfile": {
+          "regions": [
+            "West Central US",
+            "South Central US"
+          ],
+          "source": {
+            "managedImage": {
+              "id": "/subscriptions/8c15b385-5593-495b-bfe6-b1d62f0eb0e4/resourceGroups/SHARED-IMAGES/providers/Microsoft.Compute/images/Canonical-UbuntuServer-16.04-LTS-4-20180607-062103"
+            }
+          },
+          "excludeFromLatest": "false",
+          "EOL": "2019-05-01"
+        }
+      }
+    },
+    "galleryName": {
+      "value": "acg-image-gallery"
+    },
+    "imageName": {
+      "value": "acg-ubuntu-image"
+    }
+  }
+}
