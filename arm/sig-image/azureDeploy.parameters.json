@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imageProperties": {
+      "value": {
+        "name": "acg-ubuntu-image",
+        "description": "ACG Ubuntu Server 16.04 Managed Image",
+        "osType": "Linux",
+        "osState": "Generalized",
+        "EOL": "2020-01-01",
+        "publisher": "ACloudGuru",
+        "offer": "UbuntuServer",
+        "sku": "16.04",
+        "recommended": {
+          "vCPUs": {
+            "min": "1",
+            "max": "64"
+          },
+          "memory": {
+            "min": "2048",
+            "max": "307720"
+          }
+        }
+      }
+    },
+    "galleryName": {
+      "value": "acg-image-gallery"
+    }
+  }
+}

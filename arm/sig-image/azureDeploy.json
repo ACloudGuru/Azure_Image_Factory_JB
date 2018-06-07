@@ -1,0 +1,44 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "imageProperties": {
+      "type": "object"
+    },
+    "galleryName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "imageName": "[concat(parameters('galleryName'),'/',parameters('imageProperties').name)]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/galleries/images",
+      "name": "[variables('imageName')]",
+      "apiVersion": "2018-06-01",
+      "location": "[resourceGroup().location]",  
+      "properties": {
+        "description": "[parameters('imageProperties').description]",
+        "osType": "[parameters('imageProperties').osType]",
+        "osState": "[parameters('imageProperties').osState]",
+        "endOfLifeDate": "[parameters('imageProperties').EOL]",
+        "identifier": {
+          "publisher": "[parameters('imageProperties').publisher]",
+          "offer": "[parameters('imageProperties').offer]",
+          "sku": "[parameters('imageProperties').sku]"
+        },
+        "recommended": {
+          "vCPUs": {
+            "min": "[parameters('imageProperties').recommended.vCPUs.min]",
+            "max": "[parameters('imageProperties').recommended.vCPUs.max]"
+          },
+          "memory": {
+            "min": "[parameters('imageProperties').recommended.memory.min]",
+            "max": "[parameters('imageProperties').recommended.memory.max]"
+          }
+        }
+      }
+    }
+  ]
+}
