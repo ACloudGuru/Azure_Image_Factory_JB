@@ -20,7 +20,7 @@ $templateParameters = $templateFolder + 'azureDeploy.parameters.json'
 ### Get latest Managed Image ID
 $imageOffer = 'UbuntuServer'
 $imageSku = '16.04-LTS'
-$images = (az image list | ConvertFrom-Json) | Where-Object {$_.tags.'image-offer' -eq $imageOffer}
+$images = (az image list | ConvertFrom-Json) | Where-Object {$_.tags.'image-offer' -eq $imageOffer -and $_.tags.'image-sku' -eq $imageSku}
 $image = $images | Sort-Object -Property tags.'image-build-timestamp' | Select-Object -First 1
 
 ### Replace Key Vault ID in template parameters file
