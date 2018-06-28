@@ -1,0 +1,39 @@
+VSTS Release
+
+Environment 1 (Hosted Linux Preview)
+
+- Task: Azure Key Vault
+  - Display Name: Azure Key Vault: Retrieve Packer secrets
+  - Version: 1
+  - Secrets filter: packer-client-id,packer-account-id,packer-client-secret
+
+- Task: PowerShell
+  - Display Name: Get Latest Packer Version
+  - Version: 2
+  - Type: File Path
+  - Script Path: $(System.DefaultWorkingDirectory)/managed_ubuntu_image_artifacts/scripts/getLatestPackerVersion.ps1
+
+- Task: Command Line
+  - Display Name: Install Latest Packer
+  - Version: 1
+  - Tool: bash
+  - Arguments: -c "wget https://releases.hashicorp.com/packer/$(packerVersion)/packer_$(packerVersion)_linux_amd64.zip && unzip packer_$(packerVersion)_linux_amd64.zip -d packer && sudo mv packer /usr/local/ && echo "##vso[task.prependpath]/usr/local/packer""
+
+- Task: Command Line
+  - Display Name: Get VSTS Build Timestamp
+  - Version: 1
+  - Tool: bash  
+  - Arguments: -c "timestamp=$(date +%Y%m%d-%H%M%S) && echo \"##vso[task.setvariable variable=vsts_build_time]$timestamp\""
+
+- Task: Azure CLI
+  - Display Name: Create Resource Group for Packer Images
+  - Version: 1
+  - Script Location: Inline script
+  - Inline script: pwsh -File scripts/createResourceGroup.ps1 -ResourceGroupName $(imageRGName) -ResourceGroupLocation $(imageRGLocation)
+
+- Task: Build Machine Image
+  - Display Name: Build Managed Ubuntu image
+  - Version: 0
+  - Packer template: User provided
+  - Packer template location: $(System.DefaultWorkingDirectory)/managed_ubuntu_image_artifacts/packer-ubuntu/ubuntu_managed_image.json
+  - Template parameters: {"client_id":"$(packer-client-id)","subscription_id":"$(packer-account-id)","client_secret":"$(packer-client-secret)","resource_group_name":"$(imageRGName)","vsts_build_id":"$(Build.BuildID)","vsts_build_number":"$(Build.BuildNumber)","image_build_timestamp":"$(vsts_build_time)"}
